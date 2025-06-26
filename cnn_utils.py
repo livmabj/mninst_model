@@ -58,3 +58,40 @@ def augment(x, y):
     x = np.concatenate([x, flipped, rotated1, rotated2, rotated3], axis=0)
     y = np.concatenate([y, y, y, y, y], axis=0)
     return x, y
+
+def normalize(x, y):
+    #Normalizing the data to a range between -1 and 1
+
+    x = x / 255.0
+
+    x = (x-0.5)/0.5
+    return x, y
+
+def training_loop(model, train_loader, optimizer, loss_fn=nn.CrossEntropyLoss(), num_epochs=10):
+    #TRAINING LOOP
+    model.train()
+    for epoch in range(num_epochs):
+        epoch_progress = tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs}', unit='batch')
+        for x, y in epoch_progress:
+            optimizer.zero_grad()
+            output = model(x)
+            loss = loss_fn(output, y)
+            loss.backward()
+
+            optimizer.step()
+            epoch_progress.set_postfix(loss=loss.item())
+
+        print(f"Epoch {epoch+1}/{num_epochs} completed")
+
+def eval_loop(model, data_loader):
+    correct = 0
+    total = 0
+    model.eval()
+    with torch.no_grad():
+        for x, y in data_loader:
+            output = model(x)
+            predictions = torch.argmax(output, dim=1)
+            correct += (predictions == y).sum()
+            total += y.size(0)
+        accuracy = (correct/total)*100
+        print(f'Accuracy: {accuracy}%')
